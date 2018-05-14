@@ -1,6 +1,6 @@
 #+TITLE: Octave layer
 
-[[file:img/octave.png]]
+[[file:octave.png]]
 
 * Table of Contents                                        :TOC_4_gh:noexport:
  - [[#description][Description]]
