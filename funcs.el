@@ -17,10 +17,10 @@
   (interactive)
   (if octave-send-echo-input
       (progn
-        (setq octave-send-show-buffer nil)
+        (setq octave-send-echo-input nil)
         (message "Won't echo submissions to Octave RELP."))
     (progn
-      (setq octave-send-show-buffer t)
+      (setq octave-send-echo-input t)
       (message "Will echo submissions to Octave RELP."))))
 
 
