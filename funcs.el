@@ -12,6 +12,29 @@
 
 ;;;; functions for toggles
 
+(spacemacs|add-toggle octave-send-echo-input
+  :documentation "Toggle whether submissions to the REPL are echoed back."
+  :status octave-send-echo-input
+  :if (eq major-mode 'octave-mode)
+  :on (setq octave-send-echo-input t)
+  :on-message "Will echo submissions to Octave RELP."
+  :off (setq octave-send-echo-input nil))
+
+(spacemacs|add-toggle octave-send-show-buffer
+  :documentation "Toggle whether submissions to the REPL reveal the REPL's buffer."
+  :status octave-send-show-buffer
+  :if (eq major-mode 'octave-mode)
+  :on (setq octave-send-show-buffer t)
+  :on-message "Will reveal Octave REPL's buffer when submitting."
+  :off (setq octave-send-show-buffer nil))
+
+(spacemacs|add-toggle octave-matlab-syntax-compatability
+  :documentation "Toggle whether comments and block insertions are MATLAB-compatible. Spacemacs specific."
+  :if (eq major-mode 'octave-mode)
+  :on (setq spacemacs-octave-matlab-syntax-compatibility t)
+  :on-meassge "Using MATLAB compatible syntax settings"
+  :off (setq spacemacs-octave-matlab-syntax-compatibility nil))
+
 (defun spacemacs/toggle-octave-echo-input ()
   "Toggle whether input sent to Octave is echoed."
   (interactive)

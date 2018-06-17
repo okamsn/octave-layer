@@ -12,3 +12,4 @@
 ;; variables
 
 (spacemacs|define-jump-handlers octave-mode)
+(spacemacs|defvar-company-backends octave-mode)
