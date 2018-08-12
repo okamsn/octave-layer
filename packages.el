@@ -28,9 +28,7 @@
             ;; (add-hook 'octave-mode-hook 'ac-octave-init)
             (spacemacs/register-repl 'octave 'run-octave "octave"))
     :config (progn
-              (spacemacs|defvar-company-backends octave-mode) ;; USE AC AS COMPANY BACKEND
-              ;; create default values for the toggles as needed
-              (setq-default spacemacs-octave-matlab-syntax-compatibility nil)
+              (spacemacs|defvar-company-backends octave-mode) ;; USE AC AS COMPANY BACKEN
 
              (spacemacs/declare-prefix-for-mode 'octave-mode "mb" "block controls")
              (spacemacs/declare-prefix-for-mode 'octave-mode "mh" "help")
