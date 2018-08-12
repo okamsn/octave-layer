@@ -12,3 +12,4 @@
 ;; variables
 
 (spacemacs|define-jump-handlers octave-mode)
+(defvar spacemacs-octave-matlab-block-syntax-compatability nil "When non-nil, blocks use keyword 'end', else use block-specific end.")
