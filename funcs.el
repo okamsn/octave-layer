@@ -71,10 +71,38 @@
             t)
       (message "Will echo submissions to Octave RELP."))))
 
+(defun spacemacs/octave-beginning-of-defun (&optional arg)
+  "Octave-specific `beginning-of-defun-function' (which see)."
+  (interactive)
+  (or arg (setq arg 1))
+  ;; Move out of strings or comments.
+  (when (octave-in-string-or-comment-p)
+    (goto-char (octave-in-string-or-comment-p)))
+  (letrec ((orig (point))
+           (toplevel (lambda (pos)
+                       (condition-case nil
+                           (progn
+                             (backward-up-list 1)
+                             (funcall toplevel (point)))
+                         (scan-error pos)))))
+    (goto-char (funcall toplevel (point)))
+    (when (and (> arg 0) (/= orig (point)))
+      (setq arg (1- arg)))
+    (forward-sexp (- arg))
+    (and (< arg 0) (forward-sexp -1))
+    (/= orig (point))))
+
+
+
+(defun spacemacs/octave-add-breakpoint ()
+  "Add a breakpoint to the curent line."
+  (interactive))
+
 ;;;; functions to enable auto-complete
 (defun spacemacs//octave-switch-company-to-auto-complete ()
   (if (bound-and-true-p company-mode) (company-mode -1))
   (auto-complete-mode 1))
+
 
 
 ;;;; repl controls
@@ -87,109 +115,120 @@
 
 ;;;; Functions to insert text
 
-(defun spacemacs/octave-insert-if ()
-  "Insert an 'if' block."
-  (interactive)
-  (end-of-line)
-  (newline)
-  (insert "if ")
-  (prog-indent-sexp)
-  (setq-local current-cursor-position
-              (point))
-  (newline)
+(define-skeleton spacemacs/octave-insert-if
+  "Insert if stmt" nil
+  > "if (" _ ")\n"
+  > ?\n
   (if spacemacs-octave-matlab-syntax-compatibility
-      (progn
-        (insert "end")
-        (prog-indent-sexp))
-    (smie-close-block))
-  (goto-char current-cursor-position)
-  (evil-append))
+        "end"
+    "endif")
+  ;; Indent line appropriately after inserting end.
+  '(smie-indent-line)
+  "\n")
 
 
-(defun spacemacs/octave-insert-if-else ()
-  "Insert an 'if-else' block."
+(defun spacemacs/octave-insert-if-dwim ()
+  "Insert an if statement. If region active, insert around region."
   (interactive)
-  (end-of-line)
-  (newline)
-  (insert "if ")
-  (prog-indent-sexp)
-  (setq-local current-cursor-position
-              (point))
-  (newline)
-  (insert "else")
-  (prog-indent-sexp)
-  (newline)
-  (if spacemacs-octave-matlab-syntax-compatibility
-      (progn
-        (insert "end")
-        (prog-indent-sexp))
-    (smie-close-block))
-  (goto-char current-cursor-position)
-  (evil-append))
+  (if (region-active-p)
+      (let ((beg (region-beginning))
+            (end (+ (region-end) 1))) ; want to insert after region
+        (goto-char beg)
+        (insert "if (")
+        (save-excursion
+          (insert ")\n")
+          (goto-char (+ end 6)) ; account for text inserted
+          (insert "\n")
+          (insert (if spacemacs-octave-matlab-syntax-compatibility
+                      "end\n"
+                    "endif\n"))
+          (indent-region beg (point))))
+    (let ((beg (point)))
+      (insert "if (")
+      (save-excursion
+        (insert ")\n\n")
+        (insert
+         (if spacemacs-octave-matlab-syntax-compatibility
+             "end\n"
+           "endif\n"))
+        (indent-region beg (point))))))
 
-(defun spacemacs/octave-insert-switch ()
-  "Insert an 'switch' block."
-  (interactive)
-  (end-of-line)
-  (newline)
-  (insert "switch ")
-  (prog-indent-sexp)
-  (setq-local current-cursor-position
-              (point))
-  (newline)
-  (insert "otherwise")
-  (prog-indent-sexp)
-  (newline)
-  (if spacemacs-octave-matlab-syntax-compatibility
-      (progn
-        (insert "end")
-        (prog-indent-sexp))
-    (smie-close-block))
-  (goto-char current-cursor-position)
-  (evil-append))
+(defun spacemacs/octave-insert-if-else (&optional number-of-elseifs)
+  "Insert an if-else block and indent properly. With an argument, insert NUMBER-OF-ELSEIFS many elseifs in between the if and else."
+  (interactive "p")
+  (let ((beg (point)))
+  (insert "if (")
+  (save-excursion
+   (insert ")\n\n")
+   (if number-of-elseifs
+       (dotimes (n number-of-elseifs nil) ;
+         (insert "elif ()\n\n")))
+   (insert "else\n\n")
+   (insert (if spacemacs-octave-matlab-syntax-compatibility
+               "end\n" "endif\n"))
+   (indent-region beg (point)))))
 
-(defun spacemacs/octave-insert-case ()
-  "Insert a 'case' stament."
-  (interactive)
-  (end-of-line)
-  (newline)
-  (insert "case ")
-  (prog-indent-sexp)
-  (evil-append))
+(defun spacemacs/octave-insert-switch (&optional number-of-cases)
+  "Insert an if-else block and indent properly. With an argument, insert NUMBER-OF-ELSEIFS many elseifs in between the if and else."
+  (interactive "p")
+  (let ((beg (point)))
+    (insert "switch (")
+    (save-excursion
+      (insert ")\n")
+      (if number-of-cases
+          (dotimes (n number-of-cases nil) ;
+            (insert "case ()\n\n")))
+      (insert "otherwise\n\n")
+      (insert (if spacemacs-octave-matlab-syntax-compatibility
+                  "end\n" "endswitch\n"))
+      (indent-region beg (point)))))
 
-(defun spacemacs/octave-insert-for ()
-  "Insert a 'for' block."
+(defun spacemacs/octave-insert-for-dwim ()
+  "Insert a 'for' block. If region active, insert around region."
   (interactive)
-  (end-of-line)
-  (newline)
-  (insert "for ")
-  (prog-indent-sexp)
-  (setq-local current-cursor-position
-              (point))
-  (insert " = ")
-  (newline)
-  (if spacemacs-octave-matlab-syntax-compatibility
-      (progn
-        (insert "end")
-        (prog-indent-sexp))
-    (smie-close-block))
-  (goto-char current-cursor-position)
-  (evil-append))
+  (if (region-active-p)
+      (let ((beg (region-beginning))
+            (end (+ (region-end) 1))) ; want to insert after region
+        (goto-char beg)
+        (insert "for (")
+        (save-excursion
+          (insert ")\n")
+          (goto-char (+ end 6)) ; account for text inserted
+          (insert (if spacemacs-octave-matlab-syntax-compatibility
+                      "\nend\n"
+                    "\nendfor\n"))
+          (indent-region beg (point))))
+    (let ((beg (point)))
+      (insert "for (")
+      (save-excursion
+        (insert ")\n\n")
+        (insert
+         (if spacemacs-octave-matlab-syntax-compatibility
+             "end\n"
+           "endfor\n"))
+        (indent-region beg (point))))))
 
-(defun spacemacs/octave-insert-while ()
-  "Insert a 'while' block."
+(defun spacemacs/octave-insert-while-dwim ()
+  "Insert a 'while' block. If region active, insert around region."
   (interactive)
-  (end-of-line)
-  (newline)
-  (insert "while ")
-  (prog-indent-sexp)
-  (setq-local current-cursor-position
-              (point))
-  (newline)
-  (if spacemacs-octave-matlab-syntax-compatibility
-      (progn
-        (insert "end")
-        (prog-indent-sexp))
-    (smie-close-block))
-  (goto-char current-cursor-position)
-  (evil-append))
+  (if (region-active-p)
+      (let ((beg (region-beginning))
+            (end (+ (region-end) 1))) ; want to insert after region
+        (goto-char beg)
+        (insert "while (")
+        (save-excursion
+          (insert ")\n")
+          (goto-char (+ end 8)) ; account for text inserted
+          (insert (if spacemacs-octave-matlab-syntax-compatibility
+                      "\nend\n"
+                    "\nendwhile\n"))
+          (indent-region beg (point))))
+    (let ((beg (point)))
+      (insert "for (")
+      (save-excursion
+        (insert ")\n\n")
+        (insert
+         (if spacemacs-octave-matlab-syntax-compatibility
+             "end\n"
+           "endwhile\n"))
+        (indent-region beg (point))))))

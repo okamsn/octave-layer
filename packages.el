@@ -30,7 +30,7 @@
     :config (progn
               (spacemacs|defvar-company-backends octave-mode) ;; USE AC AS COMPANY BACKEND
               ;; create default values for the toggles as needed
-              (setq-default spacemacs-octave-matlab-syntax-compatibility nil)
+              (defvar spacemacs-octave-matlab-syntax-compatibility nil "Block skeletons end with keyword 'end' when non-nil, else use block specific end.")
 
              (spacemacs/declare-prefix-for-mode 'octave-mode "mb" "block controls")
              (spacemacs/declare-prefix-for-mode 'octave-mode "mh" "help")
