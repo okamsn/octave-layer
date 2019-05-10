@@ -12,4 +12,6 @@
 ;; variables
 
 (spacemacs|define-jump-handlers octave-mode)
-(spacemacs|defvar-company-backends octave-mode)
+;; (spacemacs|defvar-company-backends octave-mode)
+(defvar spacemacs-octave-matlab-syntax-compatibility nil
+  "Block skeletons end with keyword 'end' when non-nil, else use block specific keyword, e.g., 'endfunction'.")
